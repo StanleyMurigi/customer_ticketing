@@ -32,3 +32,25 @@ def mark_served_in_db(prefix, number):
               (prefix, number))
     conn.commit()
     conn.close()
+
+def get_unserved_tickets_for_counter(counter):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute(
+        "SELECT prefix, number, created_at FROM tickets WHERE counter=? AND status='waiting' ORDER BY created_at ASC",
+        (counter,)
+    )
+    rows = c.fetchall()
+    conn.close()
+    return rows  # List of (prefix, number, created_at)
+
+def get_next_ticket_for_counter(counter):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute(
+        "SELECT prefix, number FROM tickets WHERE counter=? AND status='waiting' ORDER BY created_at ASC LIMIT 1",
+        (counter,)
+    )
+    row = c.fetchone()
+    conn.close()
+    return row  # (prefix, number) or None
