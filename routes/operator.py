@@ -6,6 +6,7 @@ from tts import tts_say
 bp = Blueprint('operator', __name__, url_prefix="/operator")
 
 current_serving = {}  # counter_number: (prefix, num)
+call_counts = {}  # counter_number: count
 
 @bp.route('/<int:counter>')
 def operator(counter):
@@ -23,6 +24,11 @@ def call_next(counter):
     announce_text = f"Ticket {prefix}{num}, please proceed to counter {counter}"
     tts_say(announce_text)
     current_serving[counter] = (prefix, num)
+    
+    if call_counts.get(counter, 1) >= 3:
+        return jsonify({"ok": False, "message": "Already called 3 times"}), 200
+    call_counts[counter] = call_counts.get(counter, 1) + 1
+    
     return jsonify({"ok": True, "ticket": f"{prefix}{num}", "counter": counter, "announce": announce_text})
 
 @bp.route('/<int:counter>/new_tickets')
@@ -43,3 +49,14 @@ def display_current():
         else:
             result[counter] = "-"
     return jsonify(result)
+
+@bp.route('/<int:counter>/call_again', methods=['POST'])
+def call_again(counter):
+    # Check if there is a ticket currently being served at this counter
+    if counter not in current_serving:
+        return jsonify({"ok": False, "message": "No ticket to call again"}), 200
+
+    prefix, num = current_serving[counter]
+    announce_text = f"Ticket {prefix}{num}, please proceed to counter {counter}"
+    tts_say(announce_text)
+    return jsonify({"ok": True, "ticket": f"{prefix}{num}", "counter": counter, "announce": announce_text})

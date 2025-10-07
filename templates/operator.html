@@ -25,6 +25,44 @@
     #status { margin-top:20px; }
     #ticket-list { margin-top: 10px; }
     #ticket-list li { font-size: 22px; margin-bottom: 8px; }
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-bg.active { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 30px 30px 30px;
+      min-width: 340px;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      font-size: 28px;
+      font-family: Arial, sans-serif;
+      position: relative;
+    }
+    .modal-btns {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+    }
+    .modal-btn {
+      font-size: 26px;
+      padding: 12px 36px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .modal-btn.confirm { background: #1b8a1b; color: #fff; }
   </style>
 </head>
 <body>
@@ -38,10 +76,19 @@
     <div class="main">
       <h1>Counter {{counter}}</h1>
       <button onclick="callNext()">Call Next</button>
+      <button onclick="callAgain()">Call Again</button>
       <div id="now">Now Serving: -</div>
       <div id="status"></div>
     </div>
   </div>
+
+  <div class="modal-bg" id="modalBg" onclick="modalBgClick(event)">
+    <div class="modal-box" id="modalBox">
+      <div id="modalMsg"></div>
+      <div class="modal-btns" id="modalBtns"></div>
+    </div>
+  </div>
+
 <script>
 function callNext() {
   fetch('/operator/{{counter}}/call', {method: 'POST'})
@@ -56,6 +103,35 @@ function callNext() {
       }
     })
     .catch(e => document.getElementById('status').innerText = 'Network error');
+}
+
+function callAgain() {
+  showCallAgainModal();
+}
+
+function showCallAgainModal() {
+  document.getElementById('modalMsg').innerHTML = 'Call out this ticket again?';
+  document.getElementById('modalBtns').innerHTML = `
+    <button class="modal-btn confirm" onclick="confirmCallAgain()">Confirm</button>
+  `;
+  document.getElementById('modalBg').classList.add('active');
+}
+
+function confirmCallAgain() {
+  fetch(`/operator/{{counter}}/call_again`, {method: 'POST'})
+    .then(r => r.json())
+    .then(j => {
+      document.getElementById('modalMsg').innerHTML = j.ok ? 'Called again!' : (j.message || 'Error');
+      document.getElementById('modalBtns').innerHTML = `
+        <button class="modal-btn confirm" onclick="closeModal()">OK</button>
+      `;
+    });
+}
+
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('active');
+  document.getElementById('modalMsg').innerHTML = '';
+  document.getElementById('modalBtns').innerHTML = '';
 }
 
 function loadTickets() {
@@ -82,6 +158,25 @@ function loadTickets() {
 // Initial load and refresh every 10 seconds
 loadTickets();
 setInterval(loadTickets, 10000);
+
+function modalBgClick(event) {
+  if (event.target.id === 'modalBg' && document.getElementById('modalBtns').children.length === 1) {
+    closeModal();
+  }
+}
+
+function showModal(message, buttons) {
+  document.getElementById('modalMsg').innerText = message;
+  const modalBtns = document.getElementById('modalBtns');
+  modalBtns.innerHTML = '';
+  buttons.forEach(btn => {
+    const button = document.createElement('button');
+    button.innerText = btn.text;
+    button.onclick = btn.action;
+    modalBtns.appendChild(button);
+  });
+  document.getElementById('modalBg').classList.add('show');
+}
 </script>
 </body>
 </html>
