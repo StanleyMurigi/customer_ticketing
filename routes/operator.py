@@ -24,11 +24,6 @@ def call_next(counter):
     announce_text = f"Ticket {prefix}{num}, please proceed to counter {counter}"
     tts_say(announce_text)
     current_serving[counter] = (prefix, num)
-    
-    if call_counts.get(counter, 1) >= 3:
-        return jsonify({"ok": False, "message": "Already called 3 times"}), 200
-    call_counts[counter] = call_counts.get(counter, 1) + 1
-    
     return jsonify({"ok": True, "ticket": f"{prefix}{num}", "counter": counter, "announce": announce_text})
 
 @bp.route('/<int:counter>/new_tickets')

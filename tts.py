@@ -1,20 +1,19 @@
-import threading, pyttsx3
-
-tts_engine = pyttsx3.init()
-
-voices = tts_engine.getProperty('voices')
-
-# Choose a female-sounding voice (e.g., index 1)
-for voice in voices:
-    if "female" in voice.name.lower() or "zira" in voice.name.lower():
-        tts_engine.setProperty('voice', voice.id)
-        break
-
-tts_lock = threading.Lock()
+import pyttsx3
+import platform
 
 def tts_say(text):
-    def _speak(t):
-        with tts_lock:
-            tts_engine.say(t)
-            tts_engine.runAndWait()
-    threading.Thread(target=_speak, args=(text,), daemon=True).start()
+    engine = pyttsx3.init()
+    system = platform.system()
+    # On Windows, explicitly set a SAPI5 voice
+    if system == "Windows":
+        voices = engine.getProperty('voices')
+        # Try to select a female voice if available
+        for voice in voices:
+            if "female" in voice.name.lower() or "zira" in voice.name.lower():
+                engine.setProperty('voice', voice.id)
+                break
+        # If not found, just use the first available voice
+        else:
+            engine.setProperty('voice', voices[0].id)
+    engine.say(text)
+    engine.runAndWait()
