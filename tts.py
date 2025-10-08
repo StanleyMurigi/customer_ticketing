@@ -23,7 +23,6 @@ def _tts_worker():
             break
         engine.say(text)
         engine.runAndWait()
-        _tts_queue.task_done()
 
 def tts_say(text):
     global _tts_thread
