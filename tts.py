@@ -1,19 +1,33 @@
 import pyttsx3
 import platform
+import threading
+import queue
 
-def tts_say(text):
+_tts_queue = queue.Queue()
+_tts_thread = None
+
+def _tts_worker():
     engine = pyttsx3.init()
     system = platform.system()
-    # On Windows, explicitly set a SAPI5 voice
     if system == "Windows":
         voices = engine.getProperty('voices')
-        # Try to select a female voice if available
         for voice in voices:
             if "female" in voice.name.lower() or "zira" in voice.name.lower():
                 engine.setProperty('voice', voice.id)
                 break
-        # If not found, just use the first available voice
         else:
             engine.setProperty('voice', voices[0].id)
-    engine.say(text)
-    engine.runAndWait()
+    while True:
+        text = _tts_queue.get()
+        if text is None:
+            break
+        engine.say(text)
+        engine.runAndWait()
+        _tts_queue.task_done()
+
+def tts_say(text):
+    global _tts_thread
+    if _tts_thread is None or not _tts_thread.is_alive():
+        _tts_thread = threading.Thread(target=_tts_worker, daemon=True)
+        _tts_thread.start()
+    _tts_queue.put(text)
