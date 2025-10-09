@@ -10,17 +10,20 @@ def print_ticket(prefix, number, counter):
         + b'\x1b\x61\x01'  # Center alignment
         + b'\x1b\x45\x01'  # Bold ON
         + "CUSTOMER SERVICE CENTER\n".encode('ascii')
-        +"WELCOME TO SAFARICOM TWO RIVERS MALL\n".encode('ascii')
+        + "WELCOME TO SAFARICOM TWO RIVERS MALL\n".encode('ascii')
         + b'\x1b\x45\x00'  # Bold OFF
         + b"-------------------------\n"
         + b'\x1b\x61\x00'  # Align left
+        + b'\x1b\x45\x01'  # Bold ON
         + f"Ticket No: {prefix}{number}\n".encode('ascii')
         + f"Counter: {counter}\n".encode('ascii')
+        + b'\x1b\x45\x00'  # Bold OFF
         + f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n".encode('ascii')
         + b"-------------------------\n"
         + b"Please wait for your number to be called.\n"
-        # Feed extra lines for spacing
-        + b'\x1b\x64\x03'  # Feed 3 lines
+        # Add an extra newline and more feed lines
+        + b'\n'
+        + b'\x1b\x64\x05'  # Feed 5 lines for clean cut spacing
         # Auto cut
         + b'\x1d\x56\x00'  # Full cut
     )
